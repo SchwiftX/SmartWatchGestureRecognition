@@ -1,1 +1,1 @@
-include ':app', ':dependentwatchapp'
+include ':mobile', ':wear'
