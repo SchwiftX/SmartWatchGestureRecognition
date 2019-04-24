@@ -1,7 +1,9 @@
 package com.example.wutian.datalayer;
 
+import android.media.AudioManager;
 import android.support.v7.app.AppCompatActivity;
 import android.content.BroadcastReceiver;
+import android.util.Log;
 import android.widget.Button;
 import android.content.Context;
 import android.content.Intent;
@@ -25,6 +27,8 @@ public class MainActivity extends AppCompatActivity  {
 
     Button talkbutton;
     TextView textview;
+    Button btnVolumeUp;
+    Button btnVolumeDown;
     protected Handler myHandler;
     int receivedMessageNumber = 1;
     int sentMessageNumber = 1;
@@ -35,6 +39,20 @@ public class MainActivity extends AppCompatActivity  {
         setContentView(R.layout.activity_main);
         talkbutton = findViewById(R.id.talkButton);
         textview = findViewById(R.id.textView);
+        btnVolumeUp = findViewById(R.id.btn_volume_up);
+        btnVolumeDown = findViewById(R.id.btn_volume_down);
+        btnVolumeUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                adjustVolume(true);
+            }
+        });
+        btnVolumeDown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                adjustVolume(false);
+            }
+        });
 
         //Create a message handler//
 
@@ -52,6 +70,23 @@ public class MainActivity extends AppCompatActivity  {
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         Receiver messageReceiver = new Receiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
+    }
+
+    private void adjustVolume(boolean up) {
+        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        int curVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        Log.d("xsw", "curVolume" + curVolume);
+        if(up)
+            curVolume++;
+        else
+            curVolume--;
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, curVolume, AudioManager.FLAG_PLAY_SOUND);
+    }
+
+    @Override
+    protected void onResume() {
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        super.onResume();
     }
 
     public void messageText(String newinfo) {
