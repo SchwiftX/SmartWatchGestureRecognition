@@ -1,6 +1,9 @@
 package com.example.wutian.datalayer;
 
 import android.media.AudioManager;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.support.v7.app.AppCompatActivity;
 import android.content.BroadcastReceiver;
 import android.util.Log;
@@ -14,12 +17,15 @@ import android.os.Handler;
 import android.os.Message;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.Wearable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -32,6 +38,8 @@ public class MainActivity extends AppCompatActivity  {
     protected Handler myHandler;
     int receivedMessageNumber = 1;
     int sentMessageNumber = 1;
+    private View btnAudio;
+    private TextView tvAudio;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +49,8 @@ public class MainActivity extends AppCompatActivity  {
         textview = findViewById(R.id.textView);
         btnVolumeUp = findViewById(R.id.btn_volume_up);
         btnVolumeDown = findViewById(R.id.btn_volume_down);
+        btnAudio = findViewById(R.id.btn_audio);
+        tvAudio = findViewById(R.id.tv_audio);
         btnVolumeUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -54,6 +64,12 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
+        btnAudio.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                recognizeAudio();
+            }
+        });
         //Create a message handler//
 
         myHandler = new Handler(new Handler.Callback() {
@@ -72,10 +88,69 @@ public class MainActivity extends AppCompatActivity  {
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
     }
 
+    private void recognizeAudio() {
+        if(!SpeechRecognizer.isRecognitionAvailable(this)) {
+            Toast.makeText(this, "Recognizer Unavailable", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle params) {
+                Log.i("XSW","onReadyForSpeech");
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+                Log.i("XSW","onBeginningOfSpeech");
+            }
+
+            @Override
+            public void onRmsChanged(float rmsdB) {
+                Log.i("XSW","onRmsChanged");
+            }
+
+            @Override
+            public void onBufferReceived(byte[] buffer) {
+                Log.i("XSW","onBufferReceived");
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+                Log.i("XSW","onEndOfSpeech");
+            }
+
+            @Override
+            public void onError(int error) {
+                Log.i("XSW","onError" + error);
+            }
+
+            @Override
+            public void onResults(Bundle results) {
+                Log.i("XSW","onResults");
+                ArrayList<String> recResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                for (String str : recResults)
+                    Log.i("XSW", "ress:" + str);
+            }
+
+            @Override
+            public void onPartialResults(Bundle partialResults) {
+                Log.i("XSW","onPartialResults");
+            }
+
+            @Override
+            public void onEvent(int eventType, Bundle params) {
+                Log.i("XSW","onEvent");
+            }
+        });
+        Intent recognizerIntent = new Intent();
+        speechRecognizer.startListening(recognizerIntent);
+    }
+
     private void adjustVolume(boolean up) {
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         int curVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        Log.d("xsw", "curVolume" + curVolume);
+        Log.i("xsw", "curVolume" + curVolume);
         if(up)
             curVolume++;
         else

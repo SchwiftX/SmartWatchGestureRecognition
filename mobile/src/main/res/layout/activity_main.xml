@@ -20,7 +20,7 @@
     <TextView
         android:id="@+id/textView"
         android:layout_width="match_parent"
-        android:layout_height="360dp" />
+        android:layout_height="260dp" />
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -39,5 +39,15 @@
             android:text="Volume Down"/>
     </RelativeLayout>
 
+    <Button
+        android:id="@+id/btn_audio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Speech Recognize"/>
+
+    <TextView
+        android:id="@+id/tv_audio"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </LinearLayout>
