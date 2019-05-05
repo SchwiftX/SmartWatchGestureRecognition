@@ -1,9 +1,12 @@
 package com.example.wutian.datalayer;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.content.BroadcastReceiver;
 import android.util.Log;
@@ -40,6 +43,7 @@ public class MainActivity extends AppCompatActivity  {
     int sentMessageNumber = 1;
     private View btnAudio;
     private TextView tvAudio;
+    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 0x00000010;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +71,7 @@ public class MainActivity extends AppCompatActivity  {
         btnAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                recognizeAudio();
+                recognizeAudioWithPermissionRequest();
             }
         });
         //Create a message handler//
@@ -88,6 +92,27 @@ public class MainActivity extends AppCompatActivity  {
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
     }
 
+    private void recognizeAudioWithPermissionRequest(){
+        if(checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+            recognizeAudio();
+        else{
+            if(shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO))
+                Toast.makeText(this, "Audio Recording is required", Toast.LENGTH_SHORT).show();
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, MY_PERMISSIONS_REQUEST_RECORD_AUDIO);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == MY_PERMISSIONS_REQUEST_RECORD_AUDIO){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                recognizeAudio();
+            else
+                Toast.makeText(this, "Audio Recording Permission was not granted", Toast.LENGTH_SHORT).show();
+        }else
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
     private void recognizeAudio() {
         if(!SpeechRecognizer.isRecognitionAvailable(this)) {
             Toast.makeText(this, "Recognizer Unavailable", Toast.LENGTH_SHORT).show();
@@ -97,6 +122,7 @@ public class MainActivity extends AppCompatActivity  {
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override
             public void onReadyForSpeech(Bundle params) {
+                // TODO: 2019/5/5  
                 Log.i("XSW","onReadyForSpeech");
             }
 
@@ -107,7 +133,7 @@ public class MainActivity extends AppCompatActivity  {
 
             @Override
             public void onRmsChanged(float rmsdB) {
-                Log.i("XSW","onRmsChanged");
+//                Log.i("XSW","onRmsChanged");
             }
 
             @Override
@@ -117,20 +143,25 @@ public class MainActivity extends AppCompatActivity  {
 
             @Override
             public void onEndOfSpeech() {
+                // TODO: 2019/5/5  
                 Log.i("XSW","onEndOfSpeech");
             }
 
             @Override
             public void onError(int error) {
-                Log.i("XSW","onError" + error);
+                Log.i("XSW","onError(recognizeAudio):" + error);
             }
 
             @Override
             public void onResults(Bundle results) {
-                Log.i("XSW","onResults");
                 ArrayList<String> recResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                for (String str : recResults)
-                    Log.i("XSW", "ress:" + str);
+                StringBuilder sb = new StringBuilder();
+                for (String str : recResults) {
+                    sb.append("\n");
+                    sb.append(str);
+                }
+                Log.i("XSW","onResults:" + sb.toString());
+                tvAudio.setText(sb.toString());
             }
 
             @Override
