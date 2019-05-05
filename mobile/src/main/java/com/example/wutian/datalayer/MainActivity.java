@@ -41,9 +41,8 @@ public class MainActivity extends AppCompatActivity  {
     protected Handler myHandler;
     int receivedMessageNumber = 1;
     int sentMessageNumber = 1;
-    private View btnAudio;
+    private Button btnAudio;
     private TextView tvAudio;
-    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 0x00000010;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,12 +67,12 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-        btnAudio.setOnClickListener(new View.OnClickListener() {
+        /*btnAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 recognizeAudioWithPermissionRequest();
             }
-        });
+        });*/
         //Create a message handler//
 
         myHandler = new Handler(new Handler.Callback() {
@@ -92,91 +91,6 @@ public class MainActivity extends AppCompatActivity  {
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
     }
 
-    private void recognizeAudioWithPermissionRequest(){
-        if(checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
-            recognizeAudio();
-        else{
-            if(shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO))
-                Toast.makeText(this, "Audio Recording is required", Toast.LENGTH_SHORT).show();
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, MY_PERMISSIONS_REQUEST_RECORD_AUDIO);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode == MY_PERMISSIONS_REQUEST_RECORD_AUDIO){
-            if(grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                recognizeAudio();
-            else
-                Toast.makeText(this, "Audio Recording Permission was not granted", Toast.LENGTH_SHORT).show();
-        }else
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    private void recognizeAudio() {
-        if(!SpeechRecognizer.isRecognitionAvailable(this)) {
-            Toast.makeText(this, "Recognizer Unavailable", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        speechRecognizer.setRecognitionListener(new RecognitionListener() {
-            @Override
-            public void onReadyForSpeech(Bundle params) {
-                // TODO: 2019/5/5  
-                Log.i("XSW","onReadyForSpeech");
-            }
-
-            @Override
-            public void onBeginningOfSpeech() {
-                Log.i("XSW","onBeginningOfSpeech");
-            }
-
-            @Override
-            public void onRmsChanged(float rmsdB) {
-//                Log.i("XSW","onRmsChanged");
-            }
-
-            @Override
-            public void onBufferReceived(byte[] buffer) {
-                Log.i("XSW","onBufferReceived");
-            }
-
-            @Override
-            public void onEndOfSpeech() {
-                // TODO: 2019/5/5  
-                Log.i("XSW","onEndOfSpeech");
-            }
-
-            @Override
-            public void onError(int error) {
-                Log.i("XSW","onError(recognizeAudio):" + error);
-            }
-
-            @Override
-            public void onResults(Bundle results) {
-                ArrayList<String> recResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                StringBuilder sb = new StringBuilder();
-                for (String str : recResults) {
-                    sb.append("\n");
-                    sb.append(str);
-                }
-                Log.i("XSW","onResults:" + sb.toString());
-                tvAudio.setText(sb.toString());
-            }
-
-            @Override
-            public void onPartialResults(Bundle partialResults) {
-                Log.i("XSW","onPartialResults");
-            }
-
-            @Override
-            public void onEvent(int eventType, Bundle params) {
-                Log.i("XSW","onEvent");
-            }
-        });
-        Intent recognizerIntent = new Intent();
-        speechRecognizer.startListening(recognizerIntent);
-    }
 
     private void adjustVolume(boolean up) {
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);

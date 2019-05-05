@@ -1,11 +1,17 @@
 package com.example.wutian.datalayer;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.SpeechRecognizer;
+import android.support.annotation.NonNull;
+import android.util.Log;
 import android.widget.Button;
 import android.content.Context;
 import android.content.Intent;
@@ -14,12 +20,14 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.activity.WearableActivity;
 import android.widget.TextView;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -32,6 +40,9 @@ public class MainActivity extends WearableActivity {
     Button talkButton;
     int receivedMessageNumber = 1;
     int sentMessageNumber = 1;
+    private Button btnAudio;
+    private TextView tvAudio;
+    public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 0x00000010;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +50,8 @@ public class MainActivity extends WearableActivity {
         setContentView(R.layout.activity_main);
         textView =  findViewById(R.id.text);
         talkButton =  findViewById(R.id.talkClick);
+        btnAudio = findViewById(R.id.btn_audio);
+        tvAudio = findViewById(R.id.tv_audio);
 
 // Sensor Configuration
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -84,6 +97,92 @@ public class MainActivity extends WearableActivity {
         IntentFilter newFilter = new IntentFilter(Intent.ACTION_SEND);
         Receiver messageReceiver = new Receiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, newFilter);
+    }
+
+    private void recognizeAudioWithPermissionRequest(){
+        if(checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+            recognizeAudio();
+        else{
+            if(shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO))
+                Toast.makeText(this, "Audio Recording is required", Toast.LENGTH_SHORT).show();
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, MY_PERMISSIONS_REQUEST_RECORD_AUDIO);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == MY_PERMISSIONS_REQUEST_RECORD_AUDIO){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                recognizeAudio();
+            else
+                Toast.makeText(this, "Audio Recording Permission was not granted", Toast.LENGTH_SHORT).show();
+        }else
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    private void recognizeAudio() {
+        if(!SpeechRecognizer.isRecognitionAvailable(this)) {
+            Toast.makeText(this, "Recognizer Unavailable", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle params) {
+                // TODO: 2019/5/5
+                Log.i("XSW","onReadyForSpeech");
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+                Log.i("XSW","onBeginningOfSpeech");
+            }
+
+            @Override
+            public void onRmsChanged(float rmsdB) {
+//                Log.i("XSW","onRmsChanged");
+            }
+
+            @Override
+            public void onBufferReceived(byte[] buffer) {
+                Log.i("XSW","onBufferReceived");
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+                // TODO: 2019/5/5
+                Log.i("XSW","onEndOfSpeech");
+            }
+
+            @Override
+            public void onError(int error) {
+                Log.i("XSW","onError(recognizeAudio):" + error);
+            }
+
+            @Override
+            public void onResults(Bundle results) {
+                ArrayList<String> recResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                StringBuilder sb = new StringBuilder();
+                for (String str : recResults) {
+                    sb.append("\n");
+                    sb.append(str);
+                }
+                Log.i("XSW","onResults:" + sb.toString());
+                tvAudio.setText(sb.toString());
+            }
+
+            @Override
+            public void onPartialResults(Bundle partialResults) {
+                Log.i("XSW","onPartialResults");
+            }
+
+            @Override
+            public void onEvent(int eventType, Bundle params) {
+                Log.i("XSW","onEvent");
+            }
+        });
+        Intent recognizerIntent = new Intent();
+        speechRecognizer.startListening(recognizerIntent);
     }
 
     public class Receiver extends BroadcastReceiver {
