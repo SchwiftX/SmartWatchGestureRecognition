@@ -28,6 +28,8 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.Node;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -52,6 +54,8 @@ public class MainActivity extends WearableActivity {
         talkButton =  findViewById(R.id.talkClick);
         btnAudio = findViewById(R.id.btn_audio);
         tvAudio = findViewById(R.id.tv_audio);
+        Integer[] dasf = null;
+        btnAudio.setOnClickListener(v -> recognizeAudioWithPermissionRequest());
 
 // Sensor Configuration
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -100,6 +104,7 @@ public class MainActivity extends WearableActivity {
     }
 
     private void recognizeAudioWithPermissionRequest(){
+        Log.i("XSW","recognizeAudioWithPermissionRequest");
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
             recognizeAudio();
         else{
@@ -111,6 +116,7 @@ public class MainActivity extends WearableActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.i("XSW","onRequestPermissionsResult" + "  requestCode:"+requestCode +"  grantResults:"+grantResults[0]);
         if(requestCode == MY_PERMISSIONS_REQUEST_RECORD_AUDIO){
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 recognizeAudio();
@@ -121,6 +127,7 @@ public class MainActivity extends WearableActivity {
     }
 
     private void recognizeAudio() {
+        Log.i("XSW","recognizeAudio");
         if(!SpeechRecognizer.isRecognitionAvailable(this)) {
             Toast.makeText(this, "Recognizer Unavailable", Toast.LENGTH_SHORT).show();
             return;
