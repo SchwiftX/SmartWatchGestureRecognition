@@ -36,15 +36,23 @@ import java.util.concurrent.ExecutionException;
 public class MainActivity extends WearableActivity {
 
     private TextView textView;
-    private SensorManager sensorManager;
-    private Sensor sensor;
-    private SensorEventListener sensorEventListener;
+    private SensorManager gravityManager;
+    private Sensor gravitySensor;
+    private SensorEventListener gravityEventListener;
+    private SensorManager acceleratorManager;
+    private Sensor acceleratorSensor;
+    private SensorEventListener acceleratorEventListener;
     Button talkButton;
     int receivedMessageNumber = 1;
     int sentMessageNumber = 1;
     private Button btnAudio;
     private TextView tvAudio;
     public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 0x00000010;
+    long duration = 0;
+    int count = 1;
+    long prev = 0, curr = 0;
+    float maxAccZ = 0;
+    ArrayList<Float> acc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,10 +65,10 @@ public class MainActivity extends WearableActivity {
         Integer[] dasf = null;
         btnAudio.setOnClickListener(v -> recognizeAudioWithPermissionRequest());
 
-// Sensor Configuration
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-        sensorEventListener = new SensorEventListener() {
+// Gravity Sensor Configuration
+        gravityManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        gravitySensor = gravityManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        gravityEventListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
                 float gravity_y = event.values[1];
@@ -72,6 +80,63 @@ public class MainActivity extends WearableActivity {
                 else if(gravity_y > 2.0f){
                     new SendMessage("/my_path", "Volume down " + Integer.toString((int)gravity_y)).start();
                     textView.setText("Volume down " + Integer.toString((int)gravity_y));
+                }
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
+
+// Accelerator Sensor Configuration
+        acceleratorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        acceleratorSensor = acceleratorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        acceleratorEventListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                float accZ = event.values[2];
+
+                if (Math.abs(accZ) < 0.1f) {
+                    if (duration > 1250l) {
+                        int judge = 0;
+                        for (int i = 1; i <= count / 3; i++) {
+                            float temp = acc.get(i);
+                            maxAccZ = Math.abs(temp) > Math.abs(maxAccZ) ? temp : maxAccZ;
+                            if (temp > 0) {
+                                judge++;
+                            } else {
+                                judge--;
+                            }
+                        }
+                        Log.d(" judge  ", Integer.toString(judge));
+                        if(judge == 0){
+                            judge = maxAccZ > 0 ? 1 : -1;
+                        }
+                        if (judge > 0) {
+                            textView.setText(" Up: " + Long.toString(duration));
+                            Log.d(" Up  ", Long.toString(duration));
+                        } else {
+                            textView.setText("Down: " + Long.toString(duration));
+                            Log.d(" Down  ", Long.toString(duration));
+                        }
+                    }
+                    duration = 0;
+                    prev = System.currentTimeMillis();
+                    count = 1;
+                    maxAccZ = 0;
+                } else {
+                    curr = System.currentTimeMillis();
+                    long difference = curr - prev;
+                    duration += difference;
+                    prev = curr;
+                    if (count == 1) {
+                        acc = new ArrayList<>();
+                    }
+                    if (Math.abs(accZ) < 2.0f) {
+                        acc.add(accZ);
+                        count++;
+                    }
                 }
             }
 
@@ -251,8 +316,8 @@ public class MainActivity extends WearableActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        sensorManager.unregisterListener(sensorEventListener);
-
+        gravityManager.unregisterListener(gravityEventListener);
+        acceleratorManager.unregisterListener(acceleratorEventListener);
     }
 
     @Override
@@ -260,6 +325,7 @@ public class MainActivity extends WearableActivity {
         super.onResume();
         // register this class as a listener for the orientation and
         // gravity sensors
-        sensorManager.registerListener(sensorEventListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+        gravityManager.registerListener(gravityEventListener, gravitySensor, SensorManager.SENSOR_DELAY_NORMAL);
+        acceleratorManager.registerListener(acceleratorEventListener, acceleratorSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 }
