@@ -53,6 +53,7 @@ public class MainActivity extends WearableActivity {
     long prev = 0, curr = 0;
     float maxAccZ = 0;
     ArrayList<Float> acc;
+    int state = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,11 +76,11 @@ public class MainActivity extends WearableActivity {
 
                 if(gravity_y < -2.0f){
                     new SendMessage("/my_path", "Volume up " + Integer.toString((int)gravity_y)).start();
-                    textView.setText("Volume up " + Integer.toString((int)gravity_y));
+                    //textView.setText("Volume up " + Integer.toString((int)gravity_y));
                 }
                 else if(gravity_y > 2.0f){
                     new SendMessage("/my_path", "Volume down " + Integer.toString((int)gravity_y)).start();
-                    textView.setText("Volume down " + Integer.toString((int)gravity_y));
+                    //textView.setText("Volume down " + Integer.toString((int)gravity_y));
                 }
             }
 
@@ -96,6 +97,7 @@ public class MainActivity extends WearableActivity {
             @Override
             public void onSensorChanged(SensorEvent event) {
                 float accZ = event.values[2];
+                float accY = event.values[1];
 
                 if (Math.abs(accZ) < 0.1f) {
                     if (duration > 1250l) {
@@ -137,6 +139,24 @@ public class MainActivity extends WearableActivity {
                         acc.add(accZ);
                         count++;
                     }
+                }
+
+                if(state == 0){
+                    if(accY < 2.0f && accZ > 0.4f){
+                        state = 1;
+                    }
+                }
+                else if(state < 3){
+                    if(accY < 2.0f && accZ > 0){
+                        state++;
+                    }
+                    else{
+                        state = 1;
+                    }
+                }
+                else if(state == 3){
+                    state = 0;
+                    recognizeAudioWithPermissionRequest();
                 }
             }
 
