@@ -434,7 +434,30 @@ public class MainActivity extends WearableActivity {
 
             //String onMessageReceived = "I just received a message from the handheld " + receivedMessageNumber++;
             String onMessageReceived = intent.getStringExtra("message");
-            textView.setText(onMessageReceived);
+            String[] sets = onMessageReceived.split("#");
+            String display = "";
+            for(int i = 0; i < sets.length; i++){
+                if(i == 0){
+                    display += "Target device: ";
+                    display += sets[i];
+                }
+                else if(i == 1){
+                    display += "Attribute: ";
+                    display += sets[i];
+                }
+                else{
+                    display += "Operation: ";
+                    if(sets[i].length() > 1){
+                        display += "Turn up.";
+                    }
+                    else{
+                        display += "Turn down.";
+                    }
+                }
+                display += "\n";
+            }
+            textView.setText(display);
+
         }
     }
 
