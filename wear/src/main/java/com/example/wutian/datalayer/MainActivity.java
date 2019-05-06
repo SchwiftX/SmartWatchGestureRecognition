@@ -87,11 +87,11 @@ public class MainActivity extends WearableActivity {
                 float gravity_y = event.values[1];
 
                 if(gravity_y < -2.0f){
-                    new SendMessage("/my_path", "Volume up " + Integer.toString((int)gravity_y)).start();
+                    //new SendMessage("/my_path", "Volume up " + Integer.toString((int)gravity_y)).start();
                     //textView.setText("Volume up " + Integer.toString((int)gravity_y));
                 }
                 else if(gravity_y > 2.0f){
-                    new SendMessage("/my_path", "Volume down " + Integer.toString((int)gravity_y)).start();
+                    //new SendMessage("/my_path", "Volume down " + Integer.toString((int)gravity_y)).start();
                     //textView.setText("Volume down " + Integer.toString((int)gravity_y));
                 }
             }
@@ -128,10 +128,12 @@ public class MainActivity extends WearableActivity {
                             judge = maxAccZ > 0 ? 1 : -1;
                         }
                         if (judge > 0) {
-                            textView.setText(" Up: " + Long.toString(duration));
+                            //textView.setText(" Up: " + Long.toString(duration));
+                            operateSelectedDevice("up");
                             Log.d(" Up  ", Long.toString(duration));
                         } else {
-                            textView.setText("Down: " + Long.toString(duration));
+                            //textView.setText("Down: " + Long.toString(duration));
+                            operateSelectedDevice("down");
                             Log.d(" Down  ", Long.toString(duration));
                         }
                     }
@@ -388,7 +390,8 @@ public class MainActivity extends WearableActivity {
 
 //Display the following when a new message is received//
 
-            String onMessageReceived = "I just received a message from the handheld " + receivedMessageNumber++;
+            //String onMessageReceived = "I just received a message from the handheld " + receivedMessageNumber++;
+            String onMessageReceived = intent.getStringExtra("message");
             textView.setText(onMessageReceived);
         }
     }
@@ -457,8 +460,12 @@ public class MainActivity extends WearableActivity {
     }
 
     public boolean talk2DeviceSim(String string){
-        // TODO: 2019/5/5 @wutian simulation for interaction with other devices
-        return false; // succ or fail
+        try{
+            new SendMessage("/my_path", string).start();
+            return true;
+        }catch (Exception e) {
+            return false;
+        }
     }
 
     public class AC{

@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity  {
 //Upon receiving each message from the wearable, display the following text//
 
             textview.setText(intent.getStringExtra("message"));
+            new NewThread("/my_path", "Return from phone " + intent.getStringExtra("message")).start();
         }
     }
 
