@@ -17,10 +17,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Received request from user#1:"/>
+
         <TextView
-            android:id="@+id/returnCommand"
+            android:id="@+id/tv_log_from_smartwatch"
             android:layout_width="match_parent"
-            android:layout_height="700dp"/>
+            android:layout_height="700dp" />
+        <Button
+            android:id="@+id/clearText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear Text" />
+        <Button
+            android:id="@+id/sendCommand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="sendCommand" />
 
         <Button
             android:id="@+id/talkButton"
@@ -28,11 +39,6 @@
             android:layout_height="wrap_content"
             android:onClick="talkClick"
             android:text="Talk to the wearable" />
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="match_parent"
-            android:layout_height="260dp" />
 
         <RelativeLayout
             android:layout_width="match_parent"

@@ -539,7 +539,7 @@ public class MainActivity extends WearableActivity {
             if (tem == 0)
                 return true;
             tem = tem > 0 ? 1 : -1;
-            return talk2DeviceSim("AC" + "#" + tem);
+            return talk2DeviceSim("AC" + "#" + "temp" + "#" + tem);
         }
     }
     public class TV{

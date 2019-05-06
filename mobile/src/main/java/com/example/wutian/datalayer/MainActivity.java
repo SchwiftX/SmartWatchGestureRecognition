@@ -1,12 +1,6 @@
 package com.example.wutian.datalayer;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.content.BroadcastReceiver;
 import android.util.Log;
@@ -20,15 +14,12 @@ import android.os.Handler;
 import android.os.Message;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.Wearable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -36,12 +27,13 @@ public class MainActivity extends AppCompatActivity  {
 
     public static final String LOG_TAG_XSW = "XSW";
     Button talkbutton;
-    TextView textview;
+    TextView tvLogSW;
     Button btnVolumeUp;
     Button btnVolumeDown;
+    Button clearText;
+    Button sendCommand;
     protected Handler myHandler;
     int receivedMessageNumber = 1;
-    int sentMessageNumber = 1;
     private Button btnAudio;
     private TextView tvAudio;
 
@@ -50,23 +42,16 @@ public class MainActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         talkbutton = findViewById(R.id.talkButton);
-        textview = findViewById(R.id.textView);
+        tvLogSW = findViewById(R.id.tv_log_from_smartwatch);
         btnVolumeUp = findViewById(R.id.btn_volume_up);
         btnVolumeDown = findViewById(R.id.btn_volume_down);
+        clearText = findViewById(R.id.clearText);
+        sendCommand = findViewById(R.id.sendCommand);
         btnAudio = findViewById(R.id.btn_audio);
         tvAudio = findViewById(R.id.tv_audio);
-        btnVolumeUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                adjustVolume(true);
-            }
-        });
-        btnVolumeDown.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                adjustVolume(false);
-            }
-        });
+        btnVolumeUp.setOnClickListener(v -> adjustVolume(true));
+        btnVolumeDown.setOnClickListener(v -> adjustVolume(false));
+        clearText.setOnClickListener(v -> tvLogSW.setText(""));
 
         /*btnAudio.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,6 +75,11 @@ public class MainActivity extends AppCompatActivity  {
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         Receiver messageReceiver = new Receiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
+
+        sendCommand.setOnClickListener(v -> {
+            String message = "tv#chan#-1";
+            new NewThread("/my_path", message).start();
+        });
     }
 
 
@@ -112,7 +102,7 @@ public class MainActivity extends AppCompatActivity  {
 
     public void messageText(String newinfo) {
         if (newinfo.compareTo("") != 0) {
-            textview.append("\n" + newinfo);
+            tvLogSW.append("\n" + newinfo);
         }
     }
 
@@ -124,14 +114,16 @@ public class MainActivity extends AppCompatActivity  {
 
 //Upon receiving each message from the wearable, display the following text//
 
-            textview.setText(intent.getStringExtra("message"));
-            new NewThread("/my_path", "Return from phone " + intent.getStringExtra("message")).start();
+            String message = intent.getStringExtra("message");
+            Log.i(LOG_TAG_XSW, "onReceive message:" + message);
+            tvLogSW.append("\n" + message);
+            new NewThread("/my_path", message).start();
         }
     }
 
     public void talkClick(View v) {
         String message = "Sending message.... ";
-        textview.setText(message);
+        tvLogSW.setText(message);
 
 //Sending a message can block the main UI thread, so use a new thread//
 
@@ -177,7 +169,8 @@ public class MainActivity extends AppCompatActivity  {
 //Block on a task and get the result synchronously//
 
                         Integer result = Tasks.await(sendMessageTask);
-                        sendmessage("Just sent the wearable a message " + sentMessageNumber++);
+                        String devType = message.split("#")[0];
+                        sendmessage("Just sent the message to devType:" + devType);
                     } catch (ExecutionException exception) {
 
                     } catch (InterruptedException exception) {
