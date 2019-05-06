@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity  {
 
+    public static final String LOG_TAG_XSW = "XSW";
     Button talkbutton;
     TextView textview;
     Button btnVolumeUp;
@@ -95,7 +96,7 @@ public class MainActivity extends AppCompatActivity  {
     private void adjustVolume(boolean up) {
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         int curVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        Log.i("xsw", "curVolume" + curVolume);
+        Log.i(LOG_TAG_XSW, "curVolume" + curVolume);
         if(up)
             curVolume++;
         else

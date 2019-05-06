@@ -28,12 +28,20 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.Node;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends WearableActivity {
+
+    public static final String LOG_TAG_XSW = "XSW";
+    public static final int DEV_CODE_DEFAULT = 0x00000000;
+    public static final int DEV_CODE_AC = 0x00000001;
+    public static final int DEV_CODE_TV = 0x00000002;
+    public static final int DEV_CODE_SPEAKER = 0x00000003;
+    private int curDev = DEV_CODE_DEFAULT;
+    private AC myAC = null;
+    private TV myTV = null;
+    private Speaker mySpeaker = null;
 
     private TextView textView;
     private SensorManager gravityManager;
@@ -63,6 +71,7 @@ public class MainActivity extends WearableActivity {
         btnAudio = findViewById(R.id.btn_audio);
         tvAudio = findViewById(R.id.tv_audio);
         Integer[] dasf = null;
+        instantiateObjects();
         btnAudio.setOnClickListener(v -> recognizeAudioWithPermissionRequest());
 
 // Gravity Sensor Configuration
@@ -168,8 +177,17 @@ public class MainActivity extends WearableActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, newFilter);
     }
 
+    private void instantiateObjects() {
+        if(myAC == null)
+            myAC = new AC();
+        if(myTV == null)
+            myTV = new TV();
+        if(mySpeaker == null)
+            mySpeaker = new Speaker();
+    }
+
     private void recognizeAudioWithPermissionRequest(){
-        Log.i("XSW","recognizeAudioWithPermissionRequest");
+        Log.i(LOG_TAG_XSW,"recognizeAudioWithPermissionRequest");
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
             recognizeAudio();
         else{
@@ -181,7 +199,7 @@ public class MainActivity extends WearableActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.i("XSW","onRequestPermissionsResult" + "  requestCode:"+requestCode +"  grantResults:"+grantResults[0]);
+        Log.i(LOG_TAG_XSW,"onRequestPermissionsResult" + "  requestCode:"+requestCode +"  grantResults:"+grantResults[0]);
         if(requestCode == MY_PERMISSIONS_REQUEST_RECORD_AUDIO){
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 recognizeAudio();
@@ -192,7 +210,7 @@ public class MainActivity extends WearableActivity {
     }
 
     private void recognizeAudio() {
-        Log.i("XSW","recognizeAudio");
+        Log.i(LOG_TAG_XSW,"recognizeAudio");
         if(!SpeechRecognizer.isRecognitionAvailable(this)) {
             Toast.makeText(this, "Recognizer Unavailable", Toast.LENGTH_SHORT).show();
             return;
@@ -202,33 +220,33 @@ public class MainActivity extends WearableActivity {
             @Override
             public void onReadyForSpeech(Bundle params) {
                 // TODO: 2019/5/5
-                Log.i("XSW","onReadyForSpeech");
+                Log.i(LOG_TAG_XSW,"onReadyForSpeech");
             }
 
             @Override
             public void onBeginningOfSpeech() {
-                Log.i("XSW","onBeginningOfSpeech");
+                Log.i(LOG_TAG_XSW,"onBeginningOfSpeech");
             }
 
             @Override
             public void onRmsChanged(float rmsdB) {
-//                Log.i("XSW","onRmsChanged");
+//                Log.i(LOG_TAG_XSW,"onRmsChanged");
             }
 
             @Override
             public void onBufferReceived(byte[] buffer) {
-                Log.i("XSW","onBufferReceived");
+                Log.i(LOG_TAG_XSW,"onBufferReceived");
             }
 
             @Override
             public void onEndOfSpeech() {
                 // TODO: 2019/5/5
-                Log.i("XSW","onEndOfSpeech");
+                Log.i(LOG_TAG_XSW,"onEndOfSpeech");
             }
 
             @Override
             public void onError(int error) {
-                Log.i("XSW","onError(recognizeAudio):" + error);
+                Log.i(LOG_TAG_XSW,"onError(recognizeAudio):" + error);
             }
 
             @Override
@@ -239,22 +257,90 @@ public class MainActivity extends WearableActivity {
                     sb.append("\n");
                     sb.append(str);
                 }
-                Log.i("XSW","onResults:" + sb.toString());
+                Log.i(LOG_TAG_XSW,"onResults:" + sb.toString());
                 tvAudio.setText(sb.toString());
+                processAudioResult(recResults.get(0));
             }
 
             @Override
             public void onPartialResults(Bundle partialResults) {
-                Log.i("XSW","onPartialResults");
+                Log.i(LOG_TAG_XSW,"onPartialResults");
             }
 
             @Override
             public void onEvent(int eventType, Bundle params) {
-                Log.i("XSW","onEvent");
+                Log.i(LOG_TAG_XSW,"onEvent");
             }
         });
         Intent recognizerIntent = new Intent();
         speechRecognizer.startListening(recognizerIntent);
+    }
+
+    private void processAudioResult(String str) {
+        str = str.toLowerCase();
+        if(str.contains("ac") || str.contains("air conditioner"))
+            curDev = DEV_CODE_AC;
+        else if(str.contains("tv") || str.contains("television"))
+            curDev = DEV_CODE_TV;
+        else if(str.contains("speaker") || str.contains("music"))
+            curDev = DEV_CODE_SPEAKER;
+        operateSelectedDevice(str);
+    }
+
+    private void operateSelectedDevice(String str) {
+        if(curDev == DEV_CODE_DEFAULT){
+            Toast.makeText(this, "Target Device Unspecified", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if(str.contains("up")){
+            switch (curDev){
+                case DEV_CODE_AC:
+                    myAC.changeTemperature(1);
+                    break;
+                case DEV_CODE_TV:
+                    myTV.changeVolume(1);
+                    break;
+                case DEV_CODE_SPEAKER:
+                    mySpeaker.changeVolume(1);
+                    break;
+            }
+        }else if(str.contains("down")){
+            switch (curDev){
+                case DEV_CODE_AC:
+                    myAC.changeTemperature(-1);
+                    break;
+                case DEV_CODE_TV:
+                    myTV.changeVolume(-1);
+                    break;
+                case DEV_CODE_SPEAKER:
+                    mySpeaker.changeVolume(-1);
+                    break;
+            }
+        }else if(str.contains("next")){
+            switch (curDev){
+                case DEV_CODE_TV:
+                    myTV.changeChannel(1);
+                    break;
+                case DEV_CODE_SPEAKER:
+                    mySpeaker.changeChannel(1);
+                    break;
+                default:
+                    Toast.makeText(this, "Operation unsupported with current device", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }else if(str.contains("previous") || str.contains("last")){
+            switch (curDev){
+                case DEV_CODE_TV:
+                    myTV.changeChannel(-1);
+                    break;
+                case DEV_CODE_SPEAKER:
+                    mySpeaker.changeChannel(-1);
+                    break;
+                default:
+                    Toast.makeText(this, "Operation unsupported with current device", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
     }
 
     public class Receiver extends BroadcastReceiver {
@@ -327,5 +413,37 @@ public class MainActivity extends WearableActivity {
         // gravity sensors
         gravityManager.registerListener(gravityEventListener, gravitySensor, SensorManager.SENSOR_DELAY_NORMAL);
         acceleratorManager.registerListener(acceleratorEventListener, acceleratorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    public class AC{
+
+        public boolean changeTemperature(int tem) {
+            // TODO: 2019/5/5 tem > 0 warmer, tem < 0 cooler
+            return false;
+        }
+    }
+    public class TV{
+
+        public boolean changeVolume(int vol) {
+            // TODO: 2019/5/5 vol > 0 louder, vol < 0 quieter
+            return false;
+        }
+
+        public boolean changeChannel(int chan) {
+            // TODO: 2019/5/5 chan > 0 next, chan < 0 previous
+            return false;
+        }
+    }
+    public class Speaker {
+
+        public boolean changeVolume(int vol) {
+            // TODO: 2019/5/5 vol > 0 louder, vol < 0 quieter
+            return false;
+        }
+
+        public boolean changeChannel(int chan) {
+            // TODO: 2019/5/5 chan > 0 next, chan < 0 previous
+            return false;
+        }
     }
 }
