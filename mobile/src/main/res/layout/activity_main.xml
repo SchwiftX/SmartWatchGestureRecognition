@@ -1,53 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingBottom="@dimen/vertical_margin"
-    android:paddingLeft="@dimen/horizontal_margin"
-    android:paddingRight="@dimen/horizontal_margin"
-    android:paddingTop="@dimen/vertical_margin"
-    tools:context=".MainActivity">
-
-    <Button
-        android:id="@+id/talkButton"
+    android:layout_height="match_parent">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Talk to the wearable"
-        android:onClick="talkClick"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/horizontal_margin"
+        android:paddingTop="@dimen/vertical_margin"
+        android:paddingRight="@dimen/horizontal_margin"
+        android:paddingBottom="@dimen/vertical_margin"
+        tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="260dp" />
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <Button
-            android:id="@+id/btn_volume_up"
-            android:layout_width="180dp"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:text="Volume Up"/>
+            android:text="Received request from user#1:"/>
+        <TextView
+            android:id="@+id/returnCommand"
+            android:layout_width="match_parent"
+            android:layout_height="700dp"/>
+
         <Button
-            android:id="@+id/btn_volume_down"
-            android:layout_width="180dp"
+            android:id="@+id/talkButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:text="Volume Down"/>
-    </RelativeLayout>
+            android:onClick="talkClick"
+            android:text="Talk to the wearable" />
 
-    <Button
-        android:id="@+id/btn_audio"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Speech Recognize"/>
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="260dp" />
 
-    <TextView
-        android:id="@+id/tv_audio"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-</LinearLayout>
+            <Button
+                android:id="@+id/btn_volume_up"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:text="Volume Up" />
+
+            <Button
+                android:id="@+id/btn_volume_down"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="Volume Down" />
+        </RelativeLayout>
+
+        <Button
+            android:id="@+id/btn_audio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Speech Recognize" />
+
+        <TextView
+            android:id="@+id/tv_audio"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
+</ScrollView>

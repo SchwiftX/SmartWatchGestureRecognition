@@ -15,6 +15,10 @@
         android:orientation="vertical"
         app:boxedEdges="all">
         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Command from Hub:"/>
+        <TextView
             android:id="@+id/tv_log"
             android:layout_width="match_parent"
             android:layout_height="200dp" />
