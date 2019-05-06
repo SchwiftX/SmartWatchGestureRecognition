@@ -12,6 +12,7 @@ import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.content.Context;
 import android.content.Intent;
@@ -65,12 +66,14 @@ public class MainActivity extends WearableActivity {
     float maxAccZ = 0;
     ArrayList<Float> acc;
     int stateGyro = 0;
+    int stateAcc = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        textView =  findViewById(R.id.text);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        textView =  findViewById(R.id.tv_log);
         talkButton =  findViewById(R.id.talkClick);
         btnAudio = findViewById(R.id.btn_audio);
         tvAudio = findViewById(R.id.tv_audio);
@@ -111,49 +114,88 @@ public class MainActivity extends WearableActivity {
                 float accZ = event.values[2];
                 float accY = event.values[1];
 
-                if (Math.abs(accZ) < 0.1f) {
-                    if (duration > 1250l) {
-                        int judge = 0;
-                        for (int i = 1; i <= count / 3; i++) {
-                            float temp = acc.get(i);
-                            maxAccZ = Math.abs(temp) > Math.abs(maxAccZ) ? temp : maxAccZ;
-                            if (temp > 0) {
-                                judge++;
+                if(curDev != DEV_CODE_DEFAULT){
+                    if (Math.abs(accZ) < 0.1f) {
+                        if (duration > 1250l) {
+                            int judge = 0;
+                            for (int i = 1; i <= count / 3; i++) {
+                                float temp = acc.get(i);
+                                maxAccZ = Math.abs(temp) > Math.abs(maxAccZ) ? temp : maxAccZ;
+                                if (temp > 0) {
+                                    judge++;
+                                } else {
+                                    judge--;
+                                }
+                            }
+                            Log.d(" judge  ", Integer.toString(judge));
+                            if(judge == 0){
+                                judge = maxAccZ > 0 ? 1 : -1;
+                            }
+                            if (judge > 0) {
+                                //textView.setText(" Up: " + Long.toString(duration));
+                                operateSelectedDevice("up");
+                                Log.d(" Up  ", Long.toString(duration));
                             } else {
-                                judge--;
+                                //textView.setText("Down: " + Long.toString(duration));
+                                operateSelectedDevice("down");
+                                Log.d(" Down  ", Long.toString(duration));
                             }
                         }
-                        Log.d(" judge  ", Integer.toString(judge));
-                        if(judge == 0){
-                            judge = maxAccZ > 0 ? 1 : -1;
+                        duration = 0;
+                        prev = System.currentTimeMillis();
+                        count = 1;
+                        maxAccZ = 0;
+                    } else {
+                        curr = System.currentTimeMillis();
+                        long difference = curr - prev;
+                        duration += difference;
+                        prev = curr;
+                        if (count == 1) {
+                            acc = new ArrayList<>();
                         }
-                        if (judge > 0) {
-                            //textView.setText(" Up: " + Long.toString(duration));
-                            operateSelectedDevice("up");
-                            Log.d(" Up  ", Long.toString(duration));
-                        } else {
-                            //textView.setText("Down: " + Long.toString(duration));
-                            operateSelectedDevice("down");
-                            Log.d(" Down  ", Long.toString(duration));
+                        if (Math.abs(accZ) < 2.0f) {
+                            acc.add(accZ);
+                            count++;
                         }
-                    }
-                    duration = 0;
-                    prev = System.currentTimeMillis();
-                    count = 1;
-                    maxAccZ = 0;
-                } else {
-                    curr = System.currentTimeMillis();
-                    long difference = curr - prev;
-                    duration += difference;
-                    prev = curr;
-                    if (count == 1) {
-                        acc = new ArrayList<>();
-                    }
-                    if (Math.abs(accZ) < 2.0f) {
-                        acc.add(accZ);
-                        count++;
                     }
                 }
+
+//                if(curDev != DEV_CODE_DEFAULT){
+//                    if(stateAcc == 0){
+//                        if(accZ < 2.0f && accZ > 0.4f){
+//                            stateAcc = 1;
+//                        }
+//                        else if(accZ > -2.0f && accZ < -0.4f){
+//                            stateAcc = -1;
+//                        }
+//                    }
+//                    else if(stateAcc > 0 && stateAcc < 3){
+//                        if(accZ < 2.0f && accZ > 0){
+//                            stateAcc++;
+//                        }
+//                        else{
+//                            stateAcc = 0;
+//                        }
+//                    }
+//                    else if(stateAcc < 0 && stateAcc > -2){
+//                        if(accZ > -2.0f && accZ < -0.4f){
+//                            stateAcc--;
+//                        }
+//                        else{
+//                            stateAcc = 0;
+//                        }
+//                    }
+//                    else if(stateAcc == 3){
+//                        stateAcc = 0;
+//                        textView.setText("Up Up");
+//                        operateSelectedDevice("up");
+//                    }
+//                    else if(stateAcc == -2){
+//                        stateAcc = 0;
+//                        textView.setText("Down Down");
+//                        operateSelectedDevice("down");
+//                    }
+//                }
             }
 
             @Override
@@ -175,15 +217,15 @@ public class MainActivity extends WearableActivity {
                         stateGyro = 1;
                     }
                 }
-                else if(stateGyro < 3){
-                    if(gyroY < 2.0f && gyroY > 0){
+                else if(stateGyro < 4){
+                    if(gyroY < 2.0f && gyroY > 0.075f){
                         stateGyro++;
                     }
                     else{
                         stateGyro = 1;
                     }
                 }
-                else if(stateGyro == 3){
+                else if(stateGyro == 4){
                     stateGyro = 0;
                     recognizeAudioWithPermissionRequest();
                 }
