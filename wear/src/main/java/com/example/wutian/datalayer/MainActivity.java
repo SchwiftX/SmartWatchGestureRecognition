@@ -456,35 +456,50 @@ public class MainActivity extends WearableActivity {
         gyroscopeManager.registerListener(gyroscopeEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
+    public boolean talk2DeviceSim(String string){
+        // TODO: 2019/5/5 @wutian simulation for interaction with other devices
+        return false; // succ or fail
+    }
+
     public class AC{
 
         public boolean changeTemperature(int tem) {
-            // TODO: 2019/5/5 tem > 0 warmer, tem < 0 cooler
-            return false;
+            if (tem == 0)
+                return true;
+            tem = tem > 0 ? 1 : -1;
+            return talk2DeviceSim("AC" + "#" + tem);
         }
     }
     public class TV{
 
         public boolean changeVolume(int vol) {
-            // TODO: 2019/5/5 vol > 0 louder, vol < 0 quieter
-            return false;
+            if (vol == 0)
+                return true;
+            vol = vol > 0 ? 1 : -1;
+            return talk2DeviceSim("TV" + "#" + "vol" + "#" + vol);
         }
 
         public boolean changeChannel(int chan) {
-            // TODO: 2019/5/5 chan > 0 next, chan < 0 previous
-            return false;
+            if (chan == 0)
+                return true;
+            chan = chan > 0 ? 1 : -1;
+            return talk2DeviceSim("TV" + "#" + "chan" + "#" + chan);
         }
     }
     public class Speaker {
 
         public boolean changeVolume(int vol) {
-            // TODO: 2019/5/5 vol > 0 louder, vol < 0 quieter
-            return false;
+            if (vol == 0)
+                return true;
+            vol = vol > 0 ? 1 : -1;
+            return talk2DeviceSim("SP" + "#" + "vol" + "#" + vol);
         }
 
         public boolean changeChannel(int chan) {
-            // TODO: 2019/5/5 chan > 0 next, chan < 0 previous
-            return false;
+            if (chan == 0)
+                return true;
+            chan = chan > 0 ? 1 : -1;
+            return talk2DeviceSim("SP" + "#" + "chan" + "#" + chan);
         }
     }
 }
