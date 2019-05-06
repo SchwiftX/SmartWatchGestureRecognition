@@ -50,6 +50,9 @@ public class MainActivity extends WearableActivity {
     private SensorManager acceleratorManager;
     private Sensor acceleratorSensor;
     private SensorEventListener acceleratorEventListener;
+    private SensorManager gyroscopeManager;
+    private Sensor gyroscopeSensor;
+    private SensorEventListener gyroscopeEventListener;
     Button talkButton;
     int receivedMessageNumber = 1;
     int sentMessageNumber = 1;
@@ -61,7 +64,7 @@ public class MainActivity extends WearableActivity {
     long prev = 0, curr = 0;
     float maxAccZ = 0;
     ArrayList<Float> acc;
-    int state = 0;
+    int stateGyro = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,24 +152,40 @@ public class MainActivity extends WearableActivity {
                         count++;
                     }
                 }
+            }
 
-                if(state == 0){
-                    if(accY < 2.0f && accZ > 0.4f){
-                        state = 1;
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
+
+// Gyroscope Sensor Configuration
+        gyroscopeManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        gyroscopeSensor = gyroscopeManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        gyroscopeEventListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                float gyroY = event.values[0];
+
+                if(stateGyro == 0){
+                    if(gyroY < 2.0f && gyroY > 0.4f){
+                        stateGyro = 1;
                     }
                 }
-                else if(state < 3){
-                    if(accY < 2.0f && accZ > 0){
-                        state++;
+                else if(stateGyro < 3){
+                    if(gyroY < 2.0f && gyroY > 0){
+                        stateGyro++;
                     }
                     else{
-                        state = 1;
+                        stateGyro = 1;
                     }
                 }
-                else if(state == 3){
-                    state = 0;
+                else if(stateGyro == 3){
+                    stateGyro = 0;
                     recognizeAudioWithPermissionRequest();
                 }
+                Log.d(" gyro ", Float.toString(gyroY) + "   " + Integer.toString(stateGyro));
             }
 
             @Override
@@ -424,6 +443,7 @@ public class MainActivity extends WearableActivity {
         super.onPause();
         gravityManager.unregisterListener(gravityEventListener);
         acceleratorManager.unregisterListener(acceleratorEventListener);
+        gyroscopeManager.unregisterListener(gyroscopeEventListener);
     }
 
     @Override
@@ -433,6 +453,7 @@ public class MainActivity extends WearableActivity {
         // gravity sensors
         gravityManager.registerListener(gravityEventListener, gravitySensor, SensorManager.SENSOR_DELAY_NORMAL);
         acceleratorManager.registerListener(acceleratorEventListener, acceleratorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        gyroscopeManager.registerListener(gyroscopeEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     public class AC{
