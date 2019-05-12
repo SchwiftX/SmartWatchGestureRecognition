@@ -45,9 +45,6 @@ public class MainActivity extends WearableActivity {
     private Speaker mySpeaker = null;
 
     private TextView textView;
-    private SensorManager gravityManager;
-    private Sensor gravitySensor;
-    private SensorEventListener gravityEventListener;
     private SensorManager acceleratorManager;
     private Sensor acceleratorSensor;
     private SensorEventListener acceleratorEventListener;
@@ -60,13 +57,10 @@ public class MainActivity extends WearableActivity {
     private Button btnAudio;
     private TextView tvAudio;
     public static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 0x00000010;
-    long duration = 0;
-    int count = 1;
-    long prev = 0, curr = 0;
-    float maxAccZ = 0;
-    ArrayList<Float> acc;
+    long prevAcc = 0, currAcc = 0;
     int stateGyro = 0;
     int stateAcc = 0;
+    int count = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,30 +75,6 @@ public class MainActivity extends WearableActivity {
         instantiateObjects();
         btnAudio.setOnClickListener(v -> recognizeAudioWithPermissionRequest());
 
-// Gravity Sensor Configuration
-        gravityManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        gravitySensor = gravityManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-        gravityEventListener = new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                float gravity_y = event.values[1];
-
-                if(gravity_y < -2.0f){
-                    //new SendMessage("/my_path", "Volume up " + Integer.toString((int)gravity_y)).start();
-                    //textView.setText("Volume up " + Integer.toString((int)gravity_y));
-                }
-                else if(gravity_y > 2.0f){
-                    //new SendMessage("/my_path", "Volume down " + Integer.toString((int)gravity_y)).start();
-                    //textView.setText("Volume down " + Integer.toString((int)gravity_y));
-                }
-            }
-
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-            }
-        };
-
 // Accelerator Sensor Configuration
         acceleratorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         acceleratorSensor = acceleratorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
@@ -112,90 +82,52 @@ public class MainActivity extends WearableActivity {
             @Override
             public void onSensorChanged(SensorEvent event) {
                 float accZ = event.values[2];
-                float accY = event.values[1];
+                //Log.d("state", Integer.toString(stateAcc));
 
-                if(curDev != DEV_CODE_DEFAULT){
-                    if (Math.abs(accZ) < 0.1f) {
-                        if (duration > 1250l) {
-                            int judge = 0;
-                            for (int i = 1; i <= count / 3; i++) {
-                                float temp = acc.get(i);
-                                maxAccZ = Math.abs(temp) > Math.abs(maxAccZ) ? temp : maxAccZ;
-                                if (temp > 0) {
-                                    judge++;
-                                } else {
-                                    judge--;
-                                }
-                            }
-                            Log.d(" judge  ", Integer.toString(judge));
-                            if(judge == 0){
-                                judge = maxAccZ > 0 ? 1 : -1;
-                            }
-                            if (judge > 0) {
-                                //textView.setText(" Up: " + Long.toString(duration));
-                                operateSelectedDevice("up");
-                                Log.d(" Up  ", Long.toString(duration));
-                            } else {
-                                //textView.setText("Down: " + Long.toString(duration));
-                                operateSelectedDevice("down");
-                                Log.d(" Down  ", Long.toString(duration));
-                            }
+                if(curDev != DEV_CODE_DEFAULT ){
+                    if(stateAcc == 0){
+                        if(accZ < 1.0f && accZ > 0.2f){
+                            prevAcc = System.currentTimeMillis();
+                            stateAcc = 1;
                         }
-                        duration = 0;
-                        prev = System.currentTimeMillis();
-                        count = 1;
-                        maxAccZ = 0;
-                    } else {
-                        curr = System.currentTimeMillis();
-                        long difference = curr - prev;
-                        duration += difference;
-                        prev = curr;
-                        if (count == 1) {
-                            acc = new ArrayList<>();
+                        else if(accZ > -1.0f && accZ < -0.2f){
+                            prevAcc = System.currentTimeMillis();
+                            stateAcc = -1;
                         }
-                        if (Math.abs(accZ) < 2.0f) {
-                            acc.add(accZ);
-                            count++;
+                    }
+                    else if(stateAcc == 1){
+                        if(accZ < 0 && accZ > -1.0f){
+                            stateAcc = 2;
+                        }
+                        currAcc = System.currentTimeMillis();
+                        stateAcc = currAcc - prevAcc > 1600l ? 0 : stateAcc;
+                    }
+                    else if(stateAcc == 2){
+                        if(Math.abs(accZ) < 0.075f){
+                            Log.d("time", Long.toString(System.currentTimeMillis() - prevAcc));
+                            stateAcc = 0;
+                            textView.setText("Hand Up");
+                            prevAcc = System.currentTimeMillis();
+                            operateSelectedDevice("up");
+                        }
+                    }
+                    else if(stateAcc == -1){
+                        if(accZ > 0 && accZ < 1.0f){
+                            stateAcc = -2;
+                        }
+                        currAcc = System.currentTimeMillis();
+                        stateAcc = currAcc - prevAcc > 1600l ? 0 : stateAcc;
+                    }
+                    else if(stateAcc == -2){
+                        if(Math.abs(accZ) < 0.075f){
+                            Log.d("time", Long.toString(System.currentTimeMillis() - prevAcc));
+                            stateAcc = 0;
+                            textView.setText("Hand Down");
+                            prevAcc = System.currentTimeMillis();
+                            operateSelectedDevice("down");
                         }
                     }
                 }
-
-//                if(curDev != DEV_CODE_DEFAULT){
-//                    if(stateAcc == 0){
-//                        if(accZ < 2.0f && accZ > 0.4f){
-//                            stateAcc = 1;
-//                        }
-//                        else if(accZ > -2.0f && accZ < -0.4f){
-//                            stateAcc = -1;
-//                        }
-//                    }
-//                    else if(stateAcc > 0 && stateAcc < 3){
-//                        if(accZ < 2.0f && accZ > 0){
-//                            stateAcc++;
-//                        }
-//                        else{
-//                            stateAcc = 0;
-//                        }
-//                    }
-//                    else if(stateAcc < 0 && stateAcc > -2){
-//                        if(accZ > -2.0f && accZ < -0.4f){
-//                            stateAcc--;
-//                        }
-//                        else{
-//                            stateAcc = 0;
-//                        }
-//                    }
-//                    else if(stateAcc == 3){
-//                        stateAcc = 0;
-//                        textView.setText("Up Up");
-//                        operateSelectedDevice("up");
-//                    }
-//                    else if(stateAcc == -2){
-//                        stateAcc = 0;
-//                        textView.setText("Down Down");
-//                        operateSelectedDevice("down");
-//                    }
-//                }
             }
 
             @Override
@@ -206,30 +138,31 @@ public class MainActivity extends WearableActivity {
 
 // Gyroscope Sensor Configuration
         gyroscopeManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        gyroscopeSensor = gyroscopeManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        gyroscopeSensor = gyroscopeManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         gyroscopeEventListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                float gyroY = event.values[0];
+                int gyroX = (int) event.values[0];
+                int gyroY = (int) event.values[1];
+                int gyroZ = (int) event.values[2];
+                //Log.d(" gyro ", Integer.toString(gyroX) + "   " + Integer.toString(gyroY) + "   " + Integer.toString(gyroZ) + "  " + Integer.toString(stateGyro) + "\n");
 
                 if(stateGyro == 0){
-                    if(gyroY < 2.0f && gyroY > 0.4f){
+                    if(gyroY < -2){
                         stateGyro = 1;
                     }
                 }
-                else if(stateGyro < 4){
-                    if(gyroY < 2.0f && gyroY > 0.075f){
-                        stateGyro++;
-                    }
-                    else{
-                        stateGyro = 1;
+                else if(stateGyro == 1){
+                    if(gyroY == -9){
+                        recognizeAudioWithPermissionRequest();
+                        stateGyro = 2;
                     }
                 }
-                else if(stateGyro == 4){
-                    stateGyro = 0;
-                    recognizeAudioWithPermissionRequest();
+                else if(stateGyro == 2){
+                    if(gyroY > -2 && gyroY < 2){
+                        stateGyro = 0;
+                    }
                 }
-                Log.d(" gyro ", Float.toString(gyroY) + "   " + Integer.toString(stateGyro));
             }
 
             @Override
@@ -445,19 +378,21 @@ public class MainActivity extends WearableActivity {
                     display += "Attribute: ";
                     display += sets[i];
                 }
-                else{
+                else if(i == 2){
                     display += "Operation: ";
                     if(sets[i].length() > 1){
-                        display += "Turn up.";
+                        display += "Turn down.";
+                        Log.d("evaluation",  Integer.toString(count) + "   Turn down   " + Long.toString(System.currentTimeMillis() - prevAcc));
                     }
                     else{
-                        display += "Turn down.";
+                        display += "Turn up.";
+                        Log.d("evaluation", Integer.toString(count) + "   Turn up   " + Long.toString(System.currentTimeMillis() - prevAcc));
                     }
                 }
                 display += "\n";
             }
             textView.setText(display);
-
+            count++;
         }
     }
 
@@ -509,7 +444,6 @@ public class MainActivity extends WearableActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        gravityManager.unregisterListener(gravityEventListener);
         acceleratorManager.unregisterListener(acceleratorEventListener);
         gyroscopeManager.unregisterListener(gyroscopeEventListener);
     }
@@ -518,8 +452,6 @@ public class MainActivity extends WearableActivity {
     protected void onResume() {
         super.onResume();
         // register this class as a listener for the orientation and
-        // gravity sensors
-        gravityManager.registerListener(gravityEventListener, gravitySensor, SensorManager.SENSOR_DELAY_NORMAL);
         acceleratorManager.registerListener(acceleratorEventListener, acceleratorSensor, SensorManager.SENSOR_DELAY_NORMAL);
         gyroscopeManager.registerListener(gyroscopeEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
